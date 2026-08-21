@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NLA 5/90 Daily Lottery Forecaster & Statistical Engine</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Utilitarian Sharp Number Tiles */
+    .lotto-tile {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 46px;
+      height: 46px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 800;
+      font-size: 1.2rem;
+      border: 2px solid #000;
+      box-shadow: 2px 2px 0px #000;
+      user-select: none;
+      transition: transform 0.1s ease;
+    }
+    .lotto-tile:hover {
+      transform: translate(-1px, -1px);
+      box-shadow: 3px 3px 0px #000;
+    }
+
+    .tile-gold   { background-color: #f59e0b; color: #000000; border-color: #000000; }
+    .tile-blue   { background-color: #3b82f6; color: #ffffff; border-color: #000000; }
+    .tile-green  { background-color: #10b981; color: #000000; border-color: #000000; }
+    .tile-red    { background-color: #ef4444; color: #ffffff; border-color: #000000; }
+    .tile-purple { background-color: #a855f7; color: #ffffff; border-color: #000000; }
+    .tile-dark   { background-color: #262626; color: #fafafa; border-color: #525252; }
+
+    /* Sharp Button & Box Shadows */
+    .sharp-card {
+      border: 1px solid #333333;
+      background-color: #141414;
+    }
+    .sharp-btn {
+      border: 1px solid #404040;
+      transition: all 0.15s ease;
+    }
+    .sharp-btn:hover {
+      border-color: #f59e0b;
+      background-color: #262626;
+    }
+    .sharp-btn-primary {
+      background-color: #f59e0b;
+      color: #000000;
+      font-weight: 700;
+      border: 1px solid #000000;
+      box-shadow: 2px 2px 0px #000000;
+    }
+    .sharp-btn-primary:hover {
+      background-color: #d97706;
+      transform: translate(-1px, -1px);
+      box-shadow: 3px 3px 0px #000000;
+    }
+  </style>
+</head>
+
+<body class="bg-neutral-950 text-neutral-200 min-h-screen flex flex-col selection:bg-amber-500 selection:text-black">
+
+  <!-- Top Real-Time System Bar -->
+  <div class="border-b border-neutral-800 bg-neutral-900 px-4 py-2 text-xs">
+    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <span class="inline-block w-2 h-2 bg-emerald-500 animate-pulse"></span>
+        <span class="font-mono text-neutral-300 tracking-tight">SYSTEM: <strong class="text-emerald-400">ONLINE</strong></span>
+        <span class="text-neutral-600">|</span>
+        <span id="live-clock" class="font-mono text-neutral-400">--:--:--</span>
+      </div>
+      <div class="flex items-center gap-4 text-[11px] font-mono">
+        <span class="text-neutral-400">CYCLE: <strong class="text-neutral-200">5/90 NLA GHANA</strong></span>
+        <span class="text-neutral-600">|</span>
+        <span class="text-amber-400 font-semibold">NEXT DRAW: 18:30 GMT</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Navigation Header -->
+  <header class="border-b border-neutral-800 bg-neutral-950 sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 bg-amber-500 border border-black font-mono font-black text-black text-lg flex items-center justify-center shadow-[2px_2px_0px_#000]">
+          90
+        </div>
+        <div>
+          <h1 class="text-base font-extrabold uppercase tracking-wide text-white">
+            NLA 5/90 Statistical Forecaster
+          </h1>
+          <p class="text-xs text-neutral-400 font-mono">Dynamic Multi-Regime Prediction Engine</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button onclick="syncToLiveToday()" class="sharp-btn px-3 py-2 text-xs font-mono font-semibold bg-neutral-900 text-amber-400 flex items-center gap-1.5">
+          <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> TODAY'S GAME
+        </button>
+        <button onclick="openAddDrawModal()" class="sharp-btn-primary px-3 py-2 text-xs font-mono flex items-center gap-1.5">
+          <i data-lucide="plus" class="w-4 h-4"></i> ADD WINNING DRAW
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-6xl mx-auto px-4 py-6 w-full flex-1 space-y-6">
+
+    <!-- 7-Day Day-of-Week Sharp Selector -->
+    <div class="sharp-card p-2">
+      <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-1" id="week-tabs-container">
+        <!-- Rendered via JS -->
+      </div>
+    </div>
+
+    <!-- Active Game Slip Banner -->
+    <div class="sharp-card p-5 border-l-4 border-l-amber-500">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span id="active-tag" class="px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider bg-amber-500 text-black border border-black">
+              TODAY'S GAME
+            </span>
+            <span id="active-date-str" class="text-xs font-mono text-neutral-400"></span>
+          </div>
+          <h2 id="active-game-title" class="text-2xl md:text-3xl font-black uppercase text-white tracking-tight">
+            LOADING...
+          </h2>
+          <p id="active-game-desc" class="text-xs text-neutral-400 mt-1 max-w-xl"></p>
+        </div>
+
+        <div class="flex items-center gap-4 bg-neutral-900 border border-neutral-800 p-3">
+          <div class="text-right font-mono">
+            <div class="text-[10px] text-neutral-500 uppercase font-semibold">Forecast Status</div>
+            <div class="text-xs font-bold text-emerald-400">CALCULATED & READY</div>
+          </div>
+          <button onclick="copyForecastSlip()" class="sharp-btn px-3 py-2 bg-neutral-800 text-xs font-mono text-neutral-200 hover:text-white flex items-center gap-1.5">
+            <i data-lucide="copy" class="w-3.5 h-3.5 text-amber-400"></i> COPY SLIP
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Core Slips (Banker & Two Sure) -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+      <!-- Banker Slip -->
+      <div class="sharp-card p-5 border-t-2 border-t-amber-500 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between border-b border-neutral-800 pb-2 mb-4">
+            <span class="text-xs font-mono font-bold uppercase text-amber-400 tracking-wider flex items-center gap-1.5">
+              <i data-lucide="crosshair" class="w-3.5 h-3.5"></i> 1 DIRECT (BANKER)
+            </span>
+            <span id="banker-status-badge" class="px-2 py-0.5 text-[10px] font-mono bg-neutral-800 border border-neutral-700 text-neutral-300">--</span>
+          </div>
+
+          <div class="my-6 flex items-center justify-center gap-5">
+            <div id="banker-ball" class="lotto-tile tile-gold !w-16 !h-16 !text-2xl">--</div>
+            <div class="font-mono">
+              <div class="text-[11px] text-neutral-400">Model Weight</div>
+              <div id="banker-prob" class="text-xl font-bold text-white">--%</div>
+              <div id="banker-lapse" class="text-[11px] text-neutral-500 mt-0.5">Lapse: -- draws</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="border-t border-neutral-800 pt-3 text-xs font-mono text-neutral-400 flex justify-between">
+          <span>Counter (N±45): <strong id="banker-counter" class="text-white">--</strong></span>
+          <span>Reverse: <strong id="banker-reverse" class="text-white">--</strong></span>
+        </div>
+      </div>
+
+      <!-- Two Sure (2 Direct Prime) Slip -->
+      <div class="sharp-card p-5 border-t-2 border-t-blue-500 md:col-span-2 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between border-b border-neutral-800 pb-2 mb-4">
+            <span class="text-xs font-mono font-bold uppercase text-blue-400 tracking-wider flex items-center gap-1.5">
+              <i data-lucide="zap" class="w-3.5 h-3.5"></i> PRIME TWO SURE (2 DIRECT)
+            </span>
+            <span id="prime-confidence" class="px-2 py-0.5 text-[10px] font-mono bg-blue-950 border border-blue-800 text-blue-300">
+              --% CONFIDENCE
+            </span>
+          </div>
+
+          <div class="my-4 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div id="prime-b1" class="lotto-tile tile-blue !w-14 !h-14 !text-xl">--</div>
+              <span class="text-xl font-black font-mono text-neutral-600">+</span>
+              <div id="prime-b2" class="lotto-tile tile-blue !w-14 !h-14 !text-xl">--</div>
+            </div>
+
+            <div class="bg-neutral-900 border border-neutral-800 p-3 font-mono text-xs space-y-1">
+              <div>Joint Co-Draw Lift: <strong id="prime-lift" class="text-amber-400">--x</strong></div>
+              <div>Draw Sum / Parity: <strong id="prime-parity" class="text-neutral-300">--</strong></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="border-t border-neutral-800 pt-3 flex flex-wrap items-center justify-between text-xs font-mono text-neutral-400">
+          <span>Standard Payoff: <strong class="text-emerald-400">240x Stake</strong></span>
+          <span>Strategy: <strong class="text-neutral-300">Highest Joint Affinity</strong></span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Secondary Slips Row: Top 5 Pairs & Banker Against 4 -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+      <!-- Top 5 Pairs Table Slip -->
+      <div class="sharp-card p-5 lg:col-span-2">
+        <div class="flex items-center justify-between border-b border-neutral-800 pb-3 mb-3">
+          <h3 class="font-mono font-bold text-xs uppercase tracking-wider text-white flex items-center gap-2">
+            <i data-lucide="list-ordered" class="w-4 h-4 text-amber-400"></i> TOP 5 "2 DIRECT" COMBINATIONS
+          </h3>
+          <span class="text-[11px] font-mono text-neutral-500">Sorted by Joint Probability</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs font-mono">
+            <thead class="bg-neutral-900 text-neutral-400 uppercase text-[10px] border-b border-neutral-800">
+              <tr>
+                <th class="py-2.5 px-3">Pos</th>
+                <th class="py-2.5 px-3">2 Direct Pair</th>
+                <th class="py-2.5 px-3">Confidence</th>
+                <th class="py-2.5 px-3">P(N1) / P(N2)</th>
+                <th class="py-2.5 px-3">Co-Draw Lift</th>
+                <th class="py-2.5 px-3">Sum & Parity</th>
+              </tr>
+            </thead>
+            <tbody id="top-pairs-tbody" class="divide-y divide-neutral-800/60">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Banker Against 4 & Three Sure -->
+      <div class="sharp-card p-5 flex flex-col justify-between space-y-5">
+        <div>
+          <div class="flex items-center justify-between border-b border-neutral-800 pb-2 mb-3">
+            <h3 class="font-mono font-bold text-xs uppercase tracking-wider text-white flex items-center gap-1.5">
+              <i data-lucide="shield" class="w-3.5 h-3.5 text-emerald-400"></i> BANKER + 4 AGAINST
+            </h3>
+            <span class="text-[10px] font-mono text-neutral-500">4 Lines</span>
+          </div>
+          <div id="banker-against-box" class="space-y-1.5 font-mono text-xs">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+
+        <div class="border-t border-neutral-800 pt-4">
+          <div class="flex items-center justify-between border-b border-neutral-800 pb-2 mb-3">
+            <h3 class="font-mono font-bold text-xs uppercase tracking-wider text-white flex items-center gap-1.5">
+              <i data-lucide="hash" class="w-3.5 h-3.5 text-purple-400"></i> 5-BALL PERM CLUSTER
+            </h3>
+            <span class="text-[10px] font-mono text-neutral-500">10 Pairs</span>
+          </div>
+          <div id="perm-cluster-box" class="flex flex-wrap gap-1.5">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Statistical Monitor Bar -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+      <div class="sharp-card p-4">
+        <h4 class="text-xs font-mono font-bold uppercase text-neutral-300 mb-3 flex items-center gap-1.5">
+          <i data-lucide="flame" class="w-3.5 h-3.5 text-red-500"></i> Active Hot Numbers (Last 10 Draws)
+        </h4>
+        <div id="hot-balls-box" class="flex flex-wrap gap-1.5"></div>
+      </div>
+
+      <div class="sharp-card p-4">
+        <h4 class="text-xs font-mono font-bold uppercase text-neutral-300 mb-3 flex items-center gap-1.5">
+          <i data-lucide="snow" class="w-3.5 h-3.5 text-blue-400"></i> Cold / Overdue Return Watch
+        </h4>
+        <div id="cold-balls-box" class="flex flex-wrap gap-1.5"></div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Add Winning Draw Modal -->
+  <div id="add-modal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-neutral-900 border border-neutral-700 max-w-md w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-neutral-800 pb-3">
+        <h3 class="font-mono font-bold text-sm uppercase text-white flex items-center gap-2">
+          <i data-lucide="plus-square" class="w-4 h-4 text-amber-500"></i> Record Actual Winning Numbers
+        </h3>
+        <button onclick="closeAddDrawModal()" class="text-neutral-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-neutral-400 font-mono">
+        Enter the 5 winning balls for today. The database and lapse models will recalculate immediately.
+      </p>
+
+      <div class="space-y-3 font-mono text-xs">
+        <div>
+          <label class="text-neutral-400 block mb-1">Draw Date</label>
+          <input type="date" id="modal-date" class="w-full bg-neutral-950 border border-neutral-700 px-3 py-2 text-white focus:border-amber-500 focus:outline-none">
+        </div>
+        <div>
+          <label class="text-neutral-400 block mb-1">Game</label>
+          <select id="modal-game" class="w-full bg-neutral-950 border border-neutral-700 px-3 py-2 text-white focus:border-amber-500 focus:outline-none">
+            <option value="Monday Special">Monday Special</option>
+            <option value="Lucky Tuesday">Lucky Tuesday</option>
+            <option value="Midweek">Midweek</option>
+            <option value="Fortune Thursday">Fortune Thursday</option>
+            <option value="Friday Bonanza">Friday Bonanza</option>
+            <option value="National Weekly">National Weekly</option>
+            <option value="Sunday Aseda">Sunday Aseda</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-neutral-400 block mb-1">5 Winning Numbers (1-90)</label>
+          <div class="grid grid-cols-5 gap-1.5">
+            <input type="number" min="1" max="90" id="in-b1" placeholder="N1" class="bg-neutral-950 border border-neutral-700 text-center font-bold py-2 text-amber-400 focus:border-amber-500 focus:outline-none">
+            <input type="number" min="1" max="90" id="in-b2" placeholder="N2" class="bg-neutral-950 border border-neutral-700 text-center font-bold py-2 text-amber-400 focus:border-amber-500 focus:outline-none">
+            <input type="number" min="1" max="90" id="in-b3" placeholder="N3" class="bg-neutral-950 border border-neutral-700 text-center font-bold py-2 text-amber-400 focus:border-amber-500 focus:outline-none">
+            <input type="number" min="1" max="90" id="in-b4" placeholder="N4" class="bg-neutral-950 border border-neutral-700 text-center font-bold py-2 text-amber-400 focus:border-amber-500 focus:outline-none">
+            <input type="number" min="1" max="90" id="in-b5" placeholder="N5" class="bg-neutral-950 border border-neutral-700 text-center font-bold py-2 text-amber-400 focus:border-amber-500 focus:outline-none">
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-2 pt-2 font-mono text-xs">
+        <button onclick="closeAddDrawModal()" class="flex-1 py-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-300">
+          CANCEL
+        </button>
+        <button onclick="saveWinningDraw()" class="flex-1 py-2 bg-amber-500 hover:bg-amber-400 text-black font-bold">
+          SAVE & RECALCULATE
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="border-t border-neutral-900 bg-neutral-950 py-4 text-center text-xs font-mono text-neutral-600">
+    NLA 5/90 STATISTICAL FORECASTING SYSTEM &bull; GITHUB PAGES EDITION &bull; 2026
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
